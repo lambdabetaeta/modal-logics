@@ -1,0 +1,202 @@
+module K.DualK where
+
+infixl 0 _/_⊢_
+
+
+open import Basics
+
+-- Definition of Dual K.
+
+data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
+
+  DK-var : ∀ {A}
+  
+      ->   (A ∈ Γ)
+      ---------------
+      ->  Δ / Γ ⊢ A
+               
+  DK-app : ∀ {A B}
+  
+      -> Δ / Γ ⊢ A => B      -> Δ / Γ ⊢ A
+      -----------------------------------
+               -> Δ / Γ ⊢ B
+                          
+  DK-lam : ∀ {A B}
+  
+      -> Δ / (Γ , A) ⊢ B
+      ------------------
+      -> Δ / Γ ⊢ A => B
+               
+  DK-prod1 : ∀ {A B}
+  
+      -> Δ / Γ ⊢ A      -> Δ / Γ ⊢ B
+     -------------------------------
+           -> Δ / Γ ⊢ A ∧ B
+                     
+  DK-prod2 : ∀ {A B}
+  
+      -> Δ / Γ ⊢ A ∧ B
+      -----------------
+        -> Δ / Γ ⊢ A
+                 
+  DK-prod3 : ∀ {A B}
+  
+      -> Δ / Γ ⊢ A ∧ B
+      -----------------
+        -> Δ / Γ ⊢ B
+                 
+  DK-boxI : ∀ {A}
+  
+      -> · / Δ ⊢ A
+      ---------------
+      -> Δ / Γ ⊢ □ A
+               
+  DK-boxE : ∀ {A C}
+  
+      -> Δ / Γ ⊢ □ A    -> (Δ , A) / Γ ⊢ C
+      ------------------------------------
+                -> Δ / Γ ⊢ C
+
+
+-- Weakening and exchange.
+
+
+DK-exch : ∀ {Δ Γ A B C} (Γ' : Cx modal)
+
+    -> Δ / (Γ , A , B) ++ Γ' ⊢ C
+    ----------------------------
+    -> Δ / (Γ , B , A) ++ Γ' ⊢ C
+
+DK-exch Γ' (DK-var x) = DK-var (cx-exch {Δ = Γ'} x)
+DK-exch Γ' (DK-app d d₁) = DK-app (DK-exch Γ' d) (DK-exch Γ' d₁)
+DK-exch {C = A => B} Γ' (DK-lam d) = DK-lam (DK-exch (Γ' , A) d)
+DK-exch Γ' (DK-prod1 d d₁) = DK-prod1 (DK-exch Γ' d) (DK-exch Γ' d₁)
+DK-exch Γ' (DK-prod2 d) = DK-prod2 (DK-exch Γ' d)
+DK-exch Γ' (DK-prod3 d) = DK-prod3 (DK-exch Γ' d)
+DK-exch Γ' (DK-boxI d) = DK-boxI d
+DK-exch Γ' (DK-boxE d d₁) = DK-boxE (DK-exch Γ' d) (DK-exch Γ' d₁)
+
+
+
+DK-exch-modal : ∀ {Δ Γ A B C} (Δ' : Cx modal)
+
+    -> (Δ , A , B) ++ Δ' / Γ ⊢ C
+    ------------------------------
+    -> (Δ , B , A) ++ Δ' / Γ ⊢ C
+                    
+DK-exch-modal Δ' (DK-var x) = DK-var x
+DK-exch-modal Δ' (DK-app d e) = DK-app (DK-exch-modal Δ' d) (DK-exch-modal Δ' e)
+DK-exch-modal Δ' (DK-lam d) = DK-lam (DK-exch-modal Δ' d)
+DK-exch-modal Δ' (DK-prod1 d e) = DK-prod1 (DK-exch-modal Δ' d) (DK-exch-modal Δ' e)
+DK-exch-modal Δ' (DK-prod2 d) = DK-prod2 (DK-exch-modal Δ' d)
+DK-exch-modal Δ' (DK-prod3 d) = DK-prod3 (DK-exch-modal Δ' d)
+DK-exch-modal Δ' (DK-boxI d) = DK-boxI (DK-exch Δ' d)
+DK-exch-modal Δ' (DK-boxE d e) = DK-boxE (DK-exch-modal Δ' d) (DK-exch-modal (Δ' , _) e)
+
+
+DK-weak : ∀ {Δ Γ A B}
+
+      -> (Δ / Γ ⊢ A)
+    -------------------
+    -> (Δ / Γ , B ⊢ A)
+             
+DK-weak (DK-var x) = DK-var (pop x)
+DK-weak (DK-app d e) = DK-app (DK-weak d) (DK-weak e)
+DK-weak (DK-lam d) = DK-lam (DK-exch · (DK-weak d) )
+DK-weak (DK-prod1 d e) = DK-prod1 (DK-weak d) (DK-weak e)
+DK-weak (DK-prod2 d) = DK-prod2 (DK-weak d)
+DK-weak (DK-prod3 d) = DK-prod3 (DK-weak d)
+DK-weak (DK-boxI d) = DK-boxI d
+DK-weak (DK-boxE d e) = DK-boxE (DK-weak d) (DK-weak e)
+
+DK-weak-many : ∀ {Δ Γ Γ' A}
+
+    -> (Δ / Γ ⊢ A)    -> (Γ ⊆ Γ')
+    -----------------------------
+          -> (Δ / Γ' ⊢ A)
+
+DK-weak-many (DK-var x) f = DK-var (f x)
+DK-weak-many (DK-app d e) f = DK-app (DK-weak-many d f) (DK-weak-many e f)
+DK-weak-many (DK-lam d) f = DK-lam (DK-weak-many d (weakboth f))
+DK-weak-many (DK-prod1 d e) f = DK-prod1 (DK-weak-many d f) (DK-weak-many e f)
+DK-weak-many (DK-prod2 d) f = DK-prod2 (DK-weak-many d f)
+DK-weak-many (DK-prod3 d) f = DK-prod3 (DK-weak-many d f)
+DK-weak-many (DK-boxI d) f = DK-boxI d
+DK-weak-many (DK-boxE d e) f = DK-boxE (DK-weak-many d f) (DK-weak-many e f)
+
+
+DK-weak-modal : ∀ {Δ Γ A B}
+
+      -> (Δ / Γ ⊢ A)
+    -------------------
+    -> (Δ , B / Γ ⊢ A)
+                  
+DK-weak-modal (DK-var x) = DK-var x
+DK-weak-modal (DK-app d e) = DK-app (DK-weak-modal d) (DK-weak-modal e)
+DK-weak-modal (DK-lam d) = DK-lam (DK-weak-modal d)
+DK-weak-modal (DK-prod1 d e) = DK-prod1 (DK-weak-modal d) (DK-weak-modal e)
+DK-weak-modal (DK-prod2 d) = DK-prod2 (DK-weak-modal d)
+DK-weak-modal (DK-prod3 d) = DK-prod3 (DK-weak-modal d)
+DK-weak-modal (DK-boxI d) = DK-boxI (DK-weak d)
+DK-weak-modal (DK-boxE d e) =
+  DK-boxE (DK-weak-modal d) (DK-exch-modal · (DK-weak-modal e))
+
+
+DK-weak-many-modal : ∀ {Δ Δ' Γ A}
+
+   -> (Δ / Γ ⊢ A)    -> (Δ ⊆ Δ')
+   -----------------------------
+         -> (Δ' / Γ ⊢ A)
+
+DK-weak-many-modal (DK-var p) x = DK-var p
+DK-weak-many-modal (DK-app t u) x = DK-app (DK-weak-many-modal t x)
+                                           (DK-weak-many-modal u x)
+DK-weak-many-modal (DK-lam t) x = DK-lam (DK-weak-many-modal t x)
+DK-weak-many-modal (DK-prod1 t u) x = DK-prod1 (DK-weak-many-modal t x)
+                                               (DK-weak-many-modal u x)
+DK-weak-many-modal (DK-prod2 t) x = DK-prod2 (DK-weak-many-modal t x)
+DK-weak-many-modal (DK-prod3 t) x = DK-prod3 (DK-weak-many-modal t x)
+DK-weak-many-modal (DK-boxI t) x = DK-boxI (DK-weak-many t x)
+DK-weak-many-modal (DK-boxE t u) x = DK-boxE (DK-weak-many-modal t x)
+                                             (DK-weak-many-modal u (weakboth x))
+
+
+-- Cut.
+
+DK-cut : ∀ {Δ Γ A B} -> (Γ' : Cx modal)
+
+    -> (Δ / Γ ⊢ A)    -> (Δ / Γ , A ++ Γ' ⊢ B)
+    ------------------------------------------
+               -> (Δ / Γ ++ Γ' ⊢ B)
+
+DK-cut · d (DK-var top) = d
+DK-cut · d (DK-var (pop x)) = DK-var x
+DK-cut (Γ' , B) d (DK-var top) = DK-var top
+DK-cut (Γ' , A') d (DK-var (pop x)) = DK-weak (DK-cut Γ' d (DK-var x))
+DK-cut Γ' d (DK-app t u) = DK-app (DK-cut Γ' d t) (DK-cut Γ' d u)
+DK-cut Γ' d (DK-lam e) = DK-lam (DK-cut (Γ' , _) d e)
+DK-cut Γ' d (DK-prod1 t u) = DK-prod1 (DK-cut Γ' d t) (DK-cut Γ' d u)
+DK-cut Γ' d (DK-prod2 e) = DK-prod2 (DK-cut Γ' d e)
+DK-cut Γ' d (DK-prod3 e) = DK-prod3 (DK-cut Γ' d e)
+DK-cut Γ' d (DK-boxI e) = DK-boxI e
+DK-cut Γ' d (DK-boxE t u) =
+  DK-boxE (DK-cut Γ' d t) (DK-cut Γ' (DK-weak-modal d) u)
+
+
+DK-cut-modal : ∀ {Δ Γ A B} -> (Δ' : Cx modal)
+
+    -> (· / Δ ⊢ A)    -> (Δ , A ++ Δ' / Γ  ⊢ B)
+    -------------------------------------------
+                -> (Δ ++ Δ' / Γ ⊢ B)
+                
+DK-cut-modal Δ' d (DK-var x) = DK-var x
+DK-cut-modal Δ' d (DK-app e e') =
+  DK-app (DK-cut-modal Δ' d e) (DK-cut-modal Δ' d e')
+DK-cut-modal Δ' d (DK-lam e) = DK-lam (DK-cut-modal Δ' d e)
+DK-cut-modal Δ' d (DK-prod1 e e') =
+  DK-prod1 (DK-cut-modal Δ' d e) (DK-cut-modal Δ' d e')
+DK-cut-modal Δ' d (DK-prod2 e) = DK-prod2 (DK-cut-modal Δ' d e)
+DK-cut-modal Δ' d (DK-prod3 e) = DK-prod3 (DK-cut-modal Δ' d e)
+DK-cut-modal Δ' d (DK-boxI e) = DK-boxI (DK-cut Δ' d e)
+DK-cut-modal Δ' d (DK-boxE e e') =
+  DK-boxE (DK-cut-modal Δ' d e) (DK-cut-modal (Δ' , _) d e')

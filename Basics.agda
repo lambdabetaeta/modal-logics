@@ -116,7 +116,7 @@ trans-ty : Ty modal -> Ty simple
 trans-ty (P x) = P x
 trans-ty (A => B) = trans-ty A => trans-ty B
 trans-ty (A ∧ B) = trans-ty A ∧ trans-ty B
-trans-ty (□ A) = T => trans-ty A
+trans-ty (□ A) = trans-ty A
 
 trans-cx : Cx modal -> Cx simple
 trans-cx · = ·
@@ -125,11 +125,3 @@ trans-cx (Γ , A) = trans-cx Γ , trans-ty A
 ∈-trans-cx : ∀ {Γ : Cx modal} {A : Ty modal} -> A ∈ Γ -> trans-ty A ∈ trans-cx Γ
 ∈-trans-cx top = top
 ∈-trans-cx (pop d) = pop (∈-trans-cx d)
-
-unitize-cx : Cx simple -> Cx simple
-unitize-cx · = ·
-unitize-cx (Γ , A) = unitize-cx Γ , (T => A)
-
-∈-unitize-cx : ∀ {Γ A} -> A ∈ Γ -> (T => A) ∈ unitize-cx Γ
-∈-unitize-cx top = top
-∈-unitize-cx (pop p) = pop (∈-unitize-cx p) 

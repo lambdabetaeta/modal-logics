@@ -9,6 +9,7 @@ open import Basics
 -- Definition.
 
 data ThmS4 (Γ : Cx modal) :  Ty modal -> Set where
+
   S4-var : ∀ {A : Ty modal} -> (A ∈ Γ) -> ThmS4 Γ A
   S4-k : ∀ {A B : Ty modal} ->  ThmS4 Γ (A => (B => A))
   S4-s : ∀ {A B C : Ty modal} -> ThmS4 Γ ((A => B => C) => (A => B) => (A => C))
@@ -102,28 +103,52 @@ S4-dedthm S4-ax4 = S4-MP S4-k S4-ax4
 S4-dedthm S4-axT = S4-MP S4-k S4-axT
 
                        
--- Admissibility of the K and S4 rules.
+-- Admissibility of Scott's rule.
 
-S4-normal-ded : ∀ {Γ : Cx modal} {A : Ty modal}
+S4-Scott : ∀ {Γ : Cx modal} {A : Ty modal}
 
           -> ThmS4 Γ A
     ------------------------
     -> ThmS4 (boxcx Γ) (□ A)
                  
-S4-normal-ded (S4-var x) = S4-var (box∈cx x)
-S4-normal-ded S4-k = S4-NEC S4-k
-S4-normal-ded S4-s = S4-NEC S4-s
-S4-normal-ded (S4-MP d e) =
-  let x = S4-normal-ded d in
-  let y = S4-normal-ded e in
+S4-Scott (S4-var x) = S4-var (box∈cx x)
+S4-Scott S4-k = S4-NEC S4-k
+S4-Scott S4-s = S4-NEC S4-s
+S4-Scott (S4-MP d e) =
+  let x = S4-Scott d in
+  let y = S4-Scott e in
     S4-MP (S4-MP S4-axK x) y
-S4-normal-ded (S4-NEC d) = S4-NEC (S4-NEC d)
-S4-normal-ded S4-prod1 = S4-NEC S4-prod1
-S4-normal-ded S4-prod2 = S4-NEC S4-prod2
-S4-normal-ded S4-prod3 = S4-NEC S4-prod3
-S4-normal-ded S4-axK = S4-NEC S4-axK
-S4-normal-ded S4-ax4 = S4-NEC S4-ax4
-S4-normal-ded S4-axT = S4-NEC S4-axT
+S4-Scott (S4-NEC d) = S4-NEC (S4-NEC d)
+S4-Scott S4-prod1 = S4-NEC S4-prod1
+S4-Scott S4-prod2 = S4-NEC S4-prod2
+S4-Scott S4-prod3 = S4-NEC S4-prod3
+S4-Scott S4-axK = S4-NEC S4-axK
+S4-Scott S4-ax4 = S4-NEC S4-ax4
+S4-Scott S4-axT = S4-NEC S4-axT
+
+
+-- Admissibility of the Four rule and its variant.
+
+S4-Four : ∀ {Γ : Cx modal} {A : Ty modal}
+
+     -> ThmS4 (boxcx Γ) A
+   ------------------------
+   -> ThmS4 (boxcx Γ) (□ A)
+
+S4-Four {·} (S4-var p) = S4-NEC (S4-var p)
+S4-Four {Γ , A} (S4-var top) = S4-MP S4-ax4 (S4-var top)
+S4-Four {Γ , A} (S4-var (pop p)) =
+  S4-weak (weakone subsetid) (S4-Four {Γ} (S4-var p))
+S4-Four S4-k = S4-NEC S4-k
+S4-Four S4-s = S4-NEC S4-s
+S4-Four (S4-MP p p₁) = S4-MP (S4-MP S4-axK (S4-Four p)) (S4-Four p₁)
+S4-Four (S4-NEC p) = S4-NEC (S4-NEC p)
+S4-Four S4-prod1 = S4-NEC S4-prod1
+S4-Four S4-prod2 = S4-NEC S4-prod2
+S4-Four S4-prod3 = S4-NEC S4-prod3
+S4-Four S4-axK = S4-NEC S4-axK
+S4-Four S4-ax4 = S4-NEC S4-ax4
+S4-Four S4-axT = S4-NEC S4-axT
 
 
 S4-normal4-ded : ∀ {Γ : Cx modal} {A : Ty modal}
@@ -150,27 +175,26 @@ S4-normal4-ded S4-axK = S4-NEC S4-axK
 S4-normal4-ded S4-ax4 = S4-NEC S4-ax4
 S4-normal4-ded S4-axT = S4-NEC S4-axT
 
-S4-normalS4-ded : ∀ {Γ : Cx modal} {A : Ty modal}
 
-     -> ThmS4 (boxcx Γ) A
-   ------------------------
-   -> ThmS4 (boxcx Γ) (□ A)
+-- Admissibility of the T rule.
 
-S4-normalS4-ded {·} (S4-var p) = S4-NEC (S4-var p)
-S4-normalS4-ded {Γ , A} (S4-var top) = S4-MP S4-ax4 (S4-var top)
-S4-normalS4-ded {Γ , A} (S4-var (pop p)) =
-  let d = S4-normalS4-ded {Γ} (S4-var p) in
-    S4-weak (weakone (subsetid (boxcx Γ))) d
-S4-normalS4-ded S4-k = S4-NEC S4-k
-S4-normalS4-ded S4-s = S4-NEC S4-s
-S4-normalS4-ded (S4-MP p p₁) = S4-MP (S4-MP S4-axK (S4-normalS4-ded p)) (S4-normalS4-ded p₁)
-S4-normalS4-ded (S4-NEC p) = S4-NEC (S4-NEC p)
-S4-normalS4-ded S4-prod1 = S4-NEC S4-prod1
-S4-normalS4-ded S4-prod2 = S4-NEC S4-prod2
-S4-normalS4-ded S4-prod3 = S4-NEC S4-prod3
-S4-normalS4-ded S4-axK = S4-NEC S4-axK
-S4-normalS4-ded S4-ax4 = S4-NEC S4-ax4
-S4-normalS4-ded S4-axT = S4-NEC S4-axT
+S4-ruleT : ∀ {Γ : Cx modal} {A : Ty modal}
+
+        -> ThmS4 Γ A
+    --------------------
+    -> ThmS4 (boxcx Γ) A
+
+S4-ruleT (S4-var x) = S4-MP S4-axT (S4-var (box∈cx x))
+S4-ruleT S4-k = S4-k
+S4-ruleT S4-s = S4-s
+S4-ruleT (S4-MP p q) = S4-MP (S4-ruleT p) (S4-ruleT q)
+S4-ruleT (S4-NEC p) = S4-NEC p
+S4-ruleT S4-prod1 = S4-prod1
+S4-ruleT S4-prod2 = S4-prod2
+S4-ruleT S4-prod3 = S4-prod3
+S4-ruleT S4-axK = S4-axK
+S4-ruleT S4-ax4 = S4-ax4
+S4-ruleT S4-axT = S4-axT
 
 
 -- Admissibility of the cut rule.

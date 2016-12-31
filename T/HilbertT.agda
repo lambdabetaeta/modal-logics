@@ -9,6 +9,7 @@ open import Basics
 -- Definition.
 
 data ThmT (Γ : Cx modal) :  Ty modal -> Set where
+
   T-var : ∀ {A : Ty modal} -> (A ∈ Γ) -> ThmT Γ A
   T-k : ∀ {A B : Ty modal} ->  ThmT Γ (A => (B => A))
   T-s : ∀ {A B C : Ty modal} -> ThmT Γ ((A => B => C) => (A => B) => (A => C))
@@ -32,7 +33,7 @@ T-weak : ∀ {Γ Δ} {A}
 T-weak p (T-var x) = T-var (subsetdef x p)
 T-weak p T-k = T-k
 T-weak p T-s = T-s
-T-weak p (T-MP d d₁) = T-MP (T-weak p d) (T-weak p d₁)
+T-weak p (T-MP d e) = T-MP (T-weak p d) (T-weak p e)
 T-weak p (T-NEC d) = T-NEC d
 T-weak p T-axK = T-axK
 T-weak p T-prod1 = T-prod1
@@ -57,6 +58,7 @@ T-exch Γ' T-prod2 = T-prod2
 T-exch Γ' T-prod3 = T-prod3
 T-exch Γ' T-axK = T-axK
 T-exch Γ' T-axT = T-axT
+
 
 T-contr : ∀ {Γ} {A C} (Γ' : Cx modal)
 
@@ -97,7 +99,7 @@ T-dedthm T-axK = T-MP T-k T-axK
 T-dedthm T-axT = T-MP T-k T-axT
 
                        
--- Admissibility of the K and T rules.
+-- Admissibility of Scott's rule.
 
 T-normal-ded : ∀ {Γ : Cx modal} {A : Ty modal}
 
@@ -120,10 +122,12 @@ T-normal-ded T-axK = T-NEC T-axK
 T-normal-ded T-axT = T-NEC T-axT
 
 
+-- Admissibility of the T rule.
+
 T-ruleT : ∀ {Γ : Cx modal} {A : Ty modal}
 
-          -> ThmT Γ A
-    ------------------------
+        -> ThmT Γ A
+    -------------------
     -> ThmT (boxcx Γ) A
 
 T-ruleT (T-var x) = T-MP T-axT (T-var (box∈cx x))
@@ -150,8 +154,8 @@ T-cut d (T-var top) = d
 T-cut d (T-var (pop x)) = T-var x
 T-cut d T-k = T-k
 T-cut d T-s = T-s
-T-cut d (T-MP e e₁) = T-MP (T-cut d e) (T-cut d e₁)
-T-cut d (T-NEC e) = T-NEC e
+T-cut d (T-MP p q) = T-MP (T-cut d p) (T-cut d q)
+T-cut d (T-NEC p) = T-NEC p
 T-cut d T-prod1 = T-prod1
 T-cut d T-prod2 = T-prod2
 T-cut d T-prod3 = T-prod3

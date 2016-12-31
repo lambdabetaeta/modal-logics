@@ -3,6 +3,7 @@ module GL.DualGL where
 infixl 0 _/_⊢_
 
 open import Basics
+open import Relation.Binary.PropositionalEquality
 
 -- Definition
 
@@ -18,7 +19,7 @@ data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
   
     -> Δ / Γ ⊢ A => B    -> Δ / Γ ⊢ A
     ---------------------------------
-          -> Δ / Γ ⊢ B
+             -> Δ / Γ ⊢ B
                           
   DGL-lam : ∀ {A B}
   
@@ -46,21 +47,15 @@ data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
                  
   DGL-boxI : ∀ {A}
   
-     -> Δ / Δ ⊢ A
-    ---------------
-    -> Δ / Γ ⊢ □ A
+    -> Δ / Δ , □ A ⊢ A
+    ------------------
+      -> Δ / Γ ⊢ □ A
                
   DGL-boxE : ∀ {A C}
   
     -> Δ / Γ ⊢ □ A    -> (Δ , A) / Γ ⊢ C
     ------------------------------------
               -> Δ / Γ ⊢ C
-
-  DGL-boxY : ∀ {A}
-
-    ------------------------------
-    -> Δ / Γ ⊢ □ (□ A => A) => □ A
-  
 
 
 -- Weakening and exchange.
@@ -80,7 +75,6 @@ exch Γ' (DGL-fst d) = DGL-fst (exch Γ' d)
 exch Γ' (DGL-snd d) = DGL-snd (exch Γ' d)
 exch Γ' (DGL-boxI d) = DGL-boxI d
 exch Γ' (DGL-boxE d d₁) = DGL-boxE (exch Γ' d) (exch Γ' d₁)
-exch Γ' (DGL-boxY) = DGL-boxY
 
 
 exch-modal : ∀ {Δ Γ A B C} (Δ' : Cx modal)
@@ -97,11 +91,9 @@ exch-modal Δ' (DGL-prod d e) =
   DGL-prod (exch-modal Δ' d) (exch-modal Δ' e)
 exch-modal Δ' (DGL-fst d) = DGL-fst (exch-modal Δ' d)
 exch-modal Δ' (DGL-snd d) = DGL-snd (exch-modal Δ' d)
-exch-modal Δ' (DGL-boxI d) =
-  DGL-boxI (exch Δ' (exch-modal Δ' d))
+exch-modal Δ' (DGL-boxI {A = A} d) = DGL-boxI (exch (Δ' , □ A) (exch-modal Δ' d))
 exch-modal Δ' (DGL-boxE d e) =
   DGL-boxE (exch-modal Δ' d) (exch-modal (Δ' , _) e)
-exch-modal Δ' (DGL-boxY) = DGL-boxY
 
 
 weak : ∀ {Δ Γ Γ' A}
@@ -119,7 +111,6 @@ weak (DGL-snd d) f = DGL-snd (weak d f)
 weak (DGL-boxI d) f = DGL-boxI d
 weak (DGL-boxE d e) f =
   DGL-boxE (weak d f) (weak e f)
-weak (DGL-boxY) f = DGL-boxY
 
 
 weak-modal : ∀ {Δ Δ' Γ A}
@@ -137,11 +128,10 @@ weak-modal (DGL-prod t u) f = DGL-prod (weak-modal t f)
 weak-modal (DGL-fst t) f = DGL-fst (weak-modal t f)
 weak-modal (DGL-snd t) f = DGL-snd (weak-modal t f)
 weak-modal (DGL-boxI t) f =
-  DGL-boxI (weak (weak-modal t f) f)
+  DGL-boxI (weak (weak-modal t f) (weakboth f))
 weak-modal (DGL-boxE t u) f =
   DGL-boxE (weak-modal t f)
-          (weak-modal u (weakboth f))
-weak-modal (DGL-boxY) f = DGL-boxY
+           (weak-modal u (weakboth f))
 
 
 -- Cut.
@@ -166,12 +156,11 @@ cut Γ' d (DGL-boxI e) = DGL-boxI e
 cut Γ' d (DGL-boxE t u) =
   DGL-boxE (cut Γ' d t)
            (cut Γ' (weak-modal d (weakone (subsetid ))) u)
-cut Γ' d (DGL-boxY) = DGL-boxY
 
 
 cut-modal : ∀ {Δ Γ A B} -> (Δ' : Cx modal)
 
-    -> Δ / Δ ⊢ A    -> Δ , A ++ Δ' / Γ  ⊢ B
+    -> Δ / Δ , □ A ⊢ A    -> Δ , A ++ Δ' / Γ  ⊢ B
     ---------------------------------------
              -> Δ ++ Δ' / Γ ⊢ B
 
@@ -183,8 +172,9 @@ cut-modal Δ' d (DGL-prod p q) =
   DGL-prod (cut-modal Δ' d p) (cut-modal Δ' d q)
 cut-modal Δ' d (DGL-fst e) = DGL-fst (cut-modal Δ' d e)
 cut-modal Δ' d (DGL-snd e) = DGL-snd (cut-modal Δ' d e)
-cut-modal Δ' d (DGL-boxI e) =
-  DGL-boxI (cut Δ' (weak-modal d (concat-subset-1 _ Δ')) (cut-modal Δ' d e))
+cut-modal {Δ} {Γ} {A} {□ B} Δ' d (DGL-boxI e) =
+  let p = cut-modal Δ' d e in
+  let q = cut · (DGL-boxI d) d in
+  DGL-boxI (cut (Δ' , □ B) (weak-modal q (concat-subset-1 _ Δ')) p)
 cut-modal Δ' d (DGL-boxE p q) =
   DGL-boxE (cut-modal Δ' d p) (cut-modal (Δ' , _) d q)
-cut-modal Δ' d (DGL-boxY) = DGL-boxY

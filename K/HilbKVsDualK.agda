@@ -5,7 +5,9 @@ open import Basics
 open import K.HilbertK
 open import K.DualK
 
--- Proof of equivalence of Hilbert K with dual-context system K.
+---------------------------------------------------------------
+-- Proof of equivalence between Hilbert K and dual-context K --
+---------------------------------------------------------------
 
 dual-s : ∀ {Δ Γ A B C} -> Δ / Γ ⊢ (A => B => C) => (A => B) => (A => C)
 dual-s =  DK-lam (DK-lam (DK-lam
@@ -33,7 +35,7 @@ K-hilb-to-dual : ∀ {Γ A}
 K-hilb-to-dual (K-var x) = DK-var x
 K-hilb-to-dual K-k = DK-lam (DK-lam (DK-var (pop top)))
 K-hilb-to-dual K-s = dual-s
-K-hilb-to-dual (K-MP d d₁) = DK-app (K-hilb-to-dual d) (K-hilb-to-dual d₁)
+K-hilb-to-dual (K-MP d e) = DK-app (K-hilb-to-dual d) (K-hilb-to-dual e)
 K-hilb-to-dual (K-NEC d) = DK-boxI (K-hilb-to-dual d)
 K-hilb-to-dual K-prod1 = dual-prod1
 K-hilb-to-dual K-prod2 = DK-lam (DK-fst (DK-var top))
@@ -51,15 +53,15 @@ K-dual-to-hilb :  ∀ {Δ Γ A}
 
 K-dual-to-hilb {Δ} {Γ} {A} (DK-var x) =
   K-var (subsetdef x (concat-subset-2 _ Γ))
-K-dual-to-hilb (DK-app d d₁) = K-MP (K-dual-to-hilb d) (K-dual-to-hilb d₁)
+K-dual-to-hilb (DK-app d e) = K-MP (K-dual-to-hilb d) (K-dual-to-hilb e)
 K-dual-to-hilb (DK-lam d) = K-dedthm (K-dual-to-hilb d)
-K-dual-to-hilb (DK-prod d d₁) =
-  K-MP (K-MP K-prod1 (K-dual-to-hilb d)) (K-dual-to-hilb d₁)
+K-dual-to-hilb (DK-prod d e) =
+  K-MP (K-MP K-prod1 (K-dual-to-hilb d)) (K-dual-to-hilb e)
 K-dual-to-hilb (DK-fst d) = K-MP K-prod2 (K-dual-to-hilb d)
 K-dual-to-hilb (DK-snd d) = K-MP K-prod3 (K-dual-to-hilb d)
 K-dual-to-hilb {Δ} {Γ} {□ A}(DK-boxI d) =
   K-weak (weakmany (boxcx Δ) Γ)
-         (K-normal-ded (subst (λ Δ → ThmK Δ A) (leftid++ Δ) (K-dual-to-hilb d)))
+         (K-Scott (subst (λ Δ → ThmK Δ A) (leftid++ Δ) (K-dual-to-hilb d)))
 K-dual-to-hilb {Δ} {Γ} {C} (DK-boxE {A} {.C} d e) =
   let x = K-dual-to-hilb d in
   let y = K-dual-to-hilb e in

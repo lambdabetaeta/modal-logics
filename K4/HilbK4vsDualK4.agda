@@ -5,7 +5,9 @@ open import Basics
 open import K4.HilbertK4
 open import K4.DualK4
 
--- Proof of equivalence of Hilbert K4 with dual-context system K4.
+-----------------------------------------------------------------
+-- Proof of equivalence between Hilbert K4 and dual-context K4 --
+-----------------------------------------------------------------
 
 dual-s : ∀ {Δ Γ A B C} -> Δ / Γ ⊢ (A => B => C) => (A => B) => (A => C)
 dual-s =  DK4-lam (DK4-lam (DK4-lam
@@ -36,7 +38,7 @@ K4-hilb-to-dual : ∀ {Γ A}
 K4-hilb-to-dual (K4-var x) = DK4-var x
 K4-hilb-to-dual K4-k = DK4-lam (DK4-lam (DK4-var (pop top)))
 K4-hilb-to-dual K4-s = dual-s
-K4-hilb-to-dual (K4-MP d d₁) = DK4-app (K4-hilb-to-dual d) (K4-hilb-to-dual d₁)
+K4-hilb-to-dual (K4-MP d e) = DK4-app (K4-hilb-to-dual d) (K4-hilb-to-dual e)
 K4-hilb-to-dual (K4-NEC d) = DK4-boxI (K4-hilb-to-dual d)
 K4-hilb-to-dual K4-prod1 = dual-prod1
 K4-hilb-to-dual K4-prod2 = DK4-lam (DK4-fst (DK4-var top))
@@ -55,7 +57,7 @@ K4-dual-to-hilb :  ∀ {Δ Γ A}
 
 K4-dual-to-hilb {Δ} {Γ} {A} (DK4-var x) =
   K4-var (subsetdef x (concat-subset-2 _ Γ))
-K4-dual-to-hilb (DK4-app d d₁) = K4-MP (K4-dual-to-hilb d) (K4-dual-to-hilb d₁)
+K4-dual-to-hilb (DK4-app d e) = K4-MP (K4-dual-to-hilb d) (K4-dual-to-hilb e)
 K4-dual-to-hilb (DK4-lam d) = K4-dedthm (K4-dual-to-hilb d)
 K4-dual-to-hilb (DK4-prod d e) =
   K4-MP (K4-MP K4-prod1 (K4-dual-to-hilb d)) (K4-dual-to-hilb e)
@@ -63,7 +65,7 @@ K4-dual-to-hilb (DK4-fst d) = K4-MP K4-prod2 (K4-dual-to-hilb d)
 K4-dual-to-hilb (DK4-snd d) = K4-MP K4-prod3 (K4-dual-to-hilb d)
 K4-dual-to-hilb {Δ} {Γ} {□ A} (DK4-boxI d) =
   K4-weak (weakmany (boxcx Δ) Γ)
-          (K4-normal4-ded (K4-dual-to-hilb d))
+          (K4-Four (K4-dual-to-hilb d))
 K4-dual-to-hilb {Δ} {Γ} {C} (DK4-boxE {A} {.C} d e) =
   let x = K4-dual-to-hilb d in
   let y = K4-dual-to-hilb e in

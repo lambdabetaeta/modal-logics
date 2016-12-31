@@ -59,11 +59,12 @@ GL-exch Γ' GL-prod3 = GL-prod3
 GL-exch Γ' GL-axK = GL-axK
 GL-exch Γ' GL-axW = GL-axW
 
+
 GL-contr : ∀ {Γ} {A C} (Γ' : Cx modal)
 
-    -> ThmGL (Γ , A , A ++ Γ') C
-    ---------------------------
-     -> ThmGL (Γ , A ++ Γ') C
+  -> ThmGL (Γ , A , A ++ Γ') C
+  ----------------------------
+    -> ThmGL (Γ , A ++ Γ') C
 
 GL-contr Γ' (GL-var p) = GL-var (cx-contr {Δ = Γ'} p)
 GL-contr Γ' GL-k = GL-k
@@ -98,27 +99,27 @@ GL-dedthm GL-axK = GL-MP GL-k GL-axK
 GL-dedthm GL-axW = GL-MP GL-k GL-axW
 
                        
--- Admissibility of the K rule.
+-- Admissibility of Scott's rule.
 
-GL-normal-ded : ∀ {Γ : Cx modal} {A : Ty modal}
+GL-Scott : ∀ {Γ : Cx modal} {A : Ty modal}
 
           -> ThmGL Γ A
     ------------------------
     -> ThmGL (boxcx Γ) (□ A)
                  
-GL-normal-ded (GL-var x) = GL-var (box∈cx x)
-GL-normal-ded GL-k = GL-NEC GL-k
-GL-normal-ded GL-s = GL-NEC GL-s
-GL-normal-ded (GL-MP d e) =
-  let x = GL-normal-ded d in
-  let y = GL-normal-ded e in
+GL-Scott (GL-var x) = GL-var (box∈cx x)
+GL-Scott GL-k = GL-NEC GL-k
+GL-Scott GL-s = GL-NEC GL-s
+GL-Scott (GL-MP d e) =
+  let x = GL-Scott d in
+  let y = GL-Scott e in
     GL-MP (GL-MP GL-axK x) y
-GL-normal-ded (GL-NEC d) = GL-NEC (GL-NEC d)
-GL-normal-ded GL-prod1 = GL-NEC GL-prod1
-GL-normal-ded GL-prod2 = GL-NEC GL-prod2
-GL-normal-ded GL-prod3 = GL-NEC GL-prod3
-GL-normal-ded GL-axK = GL-NEC GL-axK
-GL-normal-ded GL-axW = GL-NEC GL-axW
+GL-Scott (GL-NEC d) = GL-NEC (GL-NEC d)
+GL-Scott GL-prod1 = GL-NEC GL-prod1
+GL-Scott GL-prod2 = GL-NEC GL-prod2
+GL-Scott GL-prod3 = GL-NEC GL-prod3
+GL-Scott GL-axK = GL-NEC GL-axK
+GL-Scott GL-axW = GL-NEC GL-axW
 
 
 -- Derivability of
@@ -145,34 +146,34 @@ GL-normal-der : ∀ {Γ} {A B}
 GL-normal-der d = GL-MP GL-axK d
 
 
-GL-prod1-der : ∀ {Γ} {A B}
+GL-prod-der : ∀ {Γ} {A B}
 
     -> ThmGL Γ A    -> ThmGL Γ B
     ----------------------------
         -> ThmGL Γ (A ∧ B)
 
-GL-prod1-der p q = GL-MP (GL-MP GL-prod1 p) q
+GL-prod-der p q = GL-MP (GL-MP GL-prod1 p) q
 
 
-GL-prod3-der : ∀ {Γ} {A B}
+GL-snd-der : ∀ {Γ} {A B}
 
     -> ThmGL Γ (A ∧ B)
     ------------------
       -> ThmGL Γ B
 
-GL-prod3-der p = GL-MP GL-prod3 p
+GL-snd-der p = GL-MP GL-prod3 p
 
 
 GL-prov4-lem1 :  ∀ {A} -> ThmGL (· , □(□ A ∧ A)) (□ A)
 
-GL-prov4-lem1 = GL-normal-ded (GL-prod3-der (GL-var top))
+GL-prov4-lem1 = GL-Scott (GL-snd-der (GL-var top))
 
 
 GL-prov4-lem2 : ∀ {A} -> ThmGL (· , A , □(□ A ∧ A))  (□ A ∧ A)
 
 GL-prov4-lem2 =
-  GL-prod1-der (GL-exch · (GL-weak (weakone subsetid) GL-prov4-lem1))
-               (GL-var (pop top))
+  GL-prod-der (GL-exch · (GL-weak (weakone subsetid) GL-prov4-lem1))
+              (GL-var (pop top))
 
 GL-prov4-lem3 : ∀ {Γ A} -> ThmGL Γ (□ A => □ (□(□ A ∧ A) => (□ A ∧ A)))
 
@@ -192,63 +193,65 @@ GL-prov4 : ∀ {Γ} {A} -> ThmGL Γ (□ A => □ □ A)
 GL-prov4 = GL-comp _ GL-prov4-lem4 GL-prov4-lem5
 
 
-GL-normal4-ded : ∀ {Γ : Cx modal} {A : Ty modal}
+-- Admissibility of the Four Rule.
+
+GL-Four : ∀ {Γ : Cx modal} {A : Ty modal}
 
    -> ThmGL (boxcx Γ ++ Γ) A
    --------------------------
    -> ThmGL (boxcx Γ) (□ A)
 
-GL-normal4-ded {·} (GL-var x) = GL-NEC (GL-var x)
-GL-normal4-ded {Γ , A} (GL-var top) = GL-var top
-GL-normal4-ded {Γ , A} (GL-var (pop x))
+GL-Four {·} (GL-var x) = GL-NEC (GL-var x)
+GL-Four {Γ , A} (GL-var top) = GL-var top
+GL-Four {Γ , A} (GL-var (pop x))
   with subsetdef x (swap-out (boxcx Γ) Γ (□ A))
 ... | top = GL-MP GL-prov4 (GL-var top)
 ... | pop q = GL-weak (concat-subset-1 (boxcx Γ) (· , □ A))
-                (GL-normal4-ded (GL-var q))
-GL-normal4-ded GL-k = GL-NEC GL-k
-GL-normal4-ded GL-s = GL-NEC GL-s
-GL-normal4-ded (GL-MP d d₁) =
-  GL-MP (GL-MP GL-axK (GL-normal4-ded d)) (GL-normal4-ded d₁)
-GL-normal4-ded (GL-NEC d) = GL-NEC (GL-NEC d)
-GL-normal4-ded GL-prod1 = GL-NEC GL-prod1
-GL-normal4-ded GL-prod2 = GL-NEC GL-prod2
-GL-normal4-ded GL-prod3 = GL-NEC GL-prod3
-GL-normal4-ded GL-axK = GL-NEC GL-axK
-GL-normal4-ded GL-axW = GL-NEC GL-axW
+                      (GL-Four (GL-var q))
+GL-Four GL-k = GL-NEC GL-k
+GL-Four GL-s = GL-NEC GL-s
+GL-Four (GL-MP p q) =
+  GL-MP (GL-MP GL-axK (GL-Four p)) (GL-Four q)
+GL-Four (GL-NEC d) = GL-NEC (GL-NEC d)
+GL-Four GL-prod1 = GL-NEC GL-prod1
+GL-Four GL-prod2 = GL-NEC GL-prod2
+GL-Four GL-prod3 = GL-NEC GL-prod3
+GL-Four GL-axK = GL-NEC GL-axK
+GL-Four GL-axW = GL-NEC GL-axW
 
 
-GL-normalGL-ded : ∀ {Γ : Cx modal} {A : Ty modal}
+-- Variant of the Four Rule.
+
+GL-Four-v : ∀ {Γ : Cx modal} {A : Ty modal}
 
      -> ThmGL (boxcx Γ) A
    ------------------------
    -> ThmGL (boxcx Γ) (□ A)
 
-GL-normalGL-ded {·} (GL-var p) = GL-NEC (GL-var p)
-GL-normalGL-ded {Γ , A} (GL-var top) = GL-MP GL-prov4 (GL-var top)
-GL-normalGL-ded {Γ , A} (GL-var (pop p)) =
-  let d = GL-normalGL-ded {Γ} (GL-var p) in
-    GL-weak (weakone subsetid) d
-GL-normalGL-ded GL-k = GL-NEC GL-k
-GL-normalGL-ded GL-s = GL-NEC GL-s
-GL-normalGL-ded (GL-MP p q) =
-  GL-MP (GL-MP GL-axK (GL-normalGL-ded p)) (GL-normalGL-ded q)
-GL-normalGL-ded (GL-NEC p) = GL-NEC (GL-NEC p)
-GL-normalGL-ded GL-prod1 = GL-NEC GL-prod1
-GL-normalGL-ded GL-prod2 = GL-NEC GL-prod2
-GL-normalGL-ded GL-prod3 = GL-NEC GL-prod3
-GL-normalGL-ded GL-axK = GL-NEC GL-axK
-GL-normalGL-ded GL-axW = GL-NEC GL-axW
+GL-Four-v {Γ} p =
+  GL-Four (GL-weak (concat-subset-1 (boxcx Γ) Γ) p)
 
 
--- Admissibility of Lob's Rule
+-- Admissibility of Lob's Rule.
 
-GL-lob-1 : ∀ {Γ : Cx modal} {A : Ty modal}
+GL-lob : ∀ {Γ : Cx modal} {A : Ty modal}
 
-  -> ThmGL · (□ A => A)
-  ---------------------
-    -> ThmGL Γ (□ A)
+  -> ThmGL (boxcx Γ ++ Γ , □ A) A
+  -------------------------------
+     -> ThmGL (boxcx Γ) (□ A)
 
-GL-lob-1 {A = A} p = GL-MP GL-axW (GL-NEC p)
+GL-lob p = GL-MP GL-axW (GL-Four (GL-dedthm p))
+
+-- Variant of Lob's rule.
+
+GL-lob-v : ∀ {Γ : Cx modal} {A : Ty modal}
+
+  -> ThmGL (boxcx Γ , □ A) A
+  ---------------------------
+   -> ThmGL (boxcx Γ) (□ A)
+
+GL-lob-v {Γ} p =
+  GL-lob (GL-weak (weakboth (concat-subset-1 (boxcx Γ) Γ)) p)
 
 
 -- Admissibility of the cut rule.

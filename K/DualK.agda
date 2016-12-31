@@ -4,7 +4,9 @@ infixl 0 _/_⊢_
 
 open import Basics
 
--- Definition
+--------------------------------------
+-- Dual contexts for constructive K --
+--------------------------------------
 
 data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
 
@@ -18,7 +20,7 @@ data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
   
     -> Δ / Γ ⊢ A => B    -> Δ / Γ ⊢ A
     ---------------------------------
-          -> Δ / Γ ⊢ B
+             -> Δ / Γ ⊢ B
                           
   DK-lam : ∀ {A B}
   
@@ -62,25 +64,25 @@ data _/_⊢_ (Δ Γ : Cx modal) :  Ty modal -> Set where
 
 exch : ∀ {Δ Γ A B C} (Γ' : Cx modal)
 
-    -> Δ / (Γ , A , B) ++ Γ' ⊢ C
-    -----------------------------
-    -> Δ / (Γ , B , A) ++ Γ' ⊢ C
+    -> Δ / Γ , A , B ++ Γ' ⊢ C
+    --------------------------
+    -> Δ / Γ , B , A ++ Γ' ⊢ C
 
 exch Γ' (DK-var x) = DK-var (cx-exch {Δ = Γ'} x)
-exch Γ' (DK-app d d₁) = DK-app (exch Γ' d) (exch Γ' d₁)
-exch {C = A => B} Γ' (DK-lam d) = DK-lam (exch (Γ' , A) d)
-exch Γ' (DK-prod d d₁) = DK-prod (exch Γ' d) (exch Γ' d₁)
-exch Γ' (DK-fst d) = DK-fst (exch Γ' d)
-exch Γ' (DK-snd d) = DK-snd (exch Γ' d)
-exch Γ' (DK-boxI d) = DK-boxI d
-exch Γ' (DK-boxE d d₁) = DK-boxE (exch Γ' d) (exch Γ' d₁)
+exch Γ' (DK-app p q) = DK-app (exch Γ' p) (exch Γ' q)
+exch Γ' (DK-lam d) = DK-lam (exch (Γ' , _) d)
+exch Γ' (DK-prod p q) = DK-prod (exch Γ' p) (exch Γ' q)
+exch Γ' (DK-fst p) = DK-fst (exch Γ' p)
+exch Γ' (DK-snd p) = DK-snd (exch Γ' p)
+exch Γ' (DK-boxI p) = DK-boxI p
+exch Γ' (DK-boxE p q) = DK-boxE (exch Γ' p) (exch Γ' q)
 
 
 exch-modal : ∀ {Δ Γ A B C} (Δ' : Cx modal)
 
-    -> (Δ , A , B) ++ Δ' / Γ  ⊢ C
-    ------------------------------
-    -> (Δ , B , A) ++ Δ' / Γ ⊢ C
+    -> Δ , A , B ++ Δ' / Γ ⊢ C
+    ---------------------------
+    -> Δ , B , A ++ Δ' / Γ ⊢ C
                     
 exch-modal Δ' (DK-var x) = DK-var x
 exch-modal Δ' (DK-app d e) =
@@ -132,6 +134,41 @@ weak-modal (DK-boxE t u) f =
           (weak-modal u (weakboth f))
 
 
+contr : ∀ {Δ Γ A C} (Γ' : Cx modal)
+
+    -> Δ / Γ , A , A ++ Γ'  ⊢ C
+    ---------------------------
+      -> Δ / Γ , A ++ Γ' ⊢ C
+
+contr · (DK-var top) = DK-var top
+contr · (DK-var (pop x)) = DK-var x
+contr (Γ' , C) (DK-var top) = DK-var top
+contr (Γ' , B) (DK-var (pop x)) = weak (contr Γ' (DK-var x)) (weakone subsetid)
+contr Γ' (DK-app p q) = DK-app (contr Γ' p) (contr Γ' q)
+contr Γ' (DK-lam p) = DK-lam (contr (Γ' , _) p)
+contr Γ' (DK-prod p q) = DK-prod (contr Γ' p) (contr Γ' q)
+contr Γ' (DK-fst p) = DK-fst (contr Γ' p)
+contr Γ' (DK-snd p) = DK-snd (contr Γ' p)
+contr Γ' (DK-boxI p) = DK-boxI p
+contr Γ' (DK-boxE p q) = DK-boxE (contr Γ' p) (contr Γ' q)
+
+
+contr-modal : ∀ {Δ Γ A C} (Δ' : Cx modal)
+
+    -> Δ , A , A ++ Δ' / Γ  ⊢ C
+    ---------------------------
+      -> Δ , A ++ Δ' / Γ ⊢ C
+
+contr-modal Δ' (DK-var x) = DK-var x
+contr-modal Δ' (DK-app p q) = DK-app (contr-modal Δ' p) (contr-modal Δ' q)
+contr-modal Δ' (DK-lam p) = DK-lam (contr-modal Δ' p)
+contr-modal Δ' (DK-prod p q) = DK-prod (contr-modal Δ' p) (contr-modal Δ' q)
+contr-modal Δ' (DK-fst p) = DK-fst (contr-modal Δ' p)
+contr-modal Δ' (DK-snd p) = DK-snd (contr-modal Δ' p)
+contr-modal Δ' (DK-boxI p) = DK-boxI (contr Δ' p)
+contr-modal Δ' (DK-boxE p q) = DK-boxE (contr-modal Δ' p) (contr-modal (Δ' , _) q)
+
+
 -- Cut.
 
 cut : ∀ {Δ Γ A B} -> (Γ' : Cx modal)
@@ -153,7 +190,7 @@ cut Γ' d (DK-snd e) = DK-snd (cut Γ' d e)
 cut Γ' d (DK-boxI e) = DK-boxI e
 cut Γ' d (DK-boxE t u) =
   DK-boxE (cut Γ' d t)
-           (cut Γ' (weak-modal d (weakone (subsetid ))) u)
+          (cut Γ' (weak-modal d (weakone subsetid)) u)
 
 
 cut-modal : ∀ {Δ Γ A B} -> (Δ' : Cx modal)

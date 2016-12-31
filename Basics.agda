@@ -2,6 +2,7 @@ module Basics where
 
 open import Relation.Binary.PropositionalEquality
 open import Data.Nat using (ℕ ; zero ; suc)
+open import Data.Sum renaming (_⊎_ to _+_)
 
 infixr 1 _=>_
 infixr 5 _∈_
@@ -105,10 +106,37 @@ cx-contr {Δ = ·} (pop d) = d
 cx-contr {Δ = Δ , A₁} top = top
 cx-contr {Δ = Δ , A₁} (pop d) = subsetdef d (weakone (cx-contr {Δ = Δ}))
 
+is-in : ∀ {T} (Γ Γ' : Cx T) (A : Ty T) -> A ∈ (Γ , A ++ Γ')
+is-in Γ · A = top
+is-in Γ (Γ' , A') A = pop (is-in Γ Γ' A)
+
+ctxt-disj : ∀ {T} (Γ Γ' : Cx T) (A : Ty T) -> A ∈ (Γ ++ Γ') -> A ∈ Γ + A ∈ Γ'
+ctxt-disj Γ · A x = inj₁ x
+ctxt-disj Γ (Γ' , A') .A' top = inj₂ top
+ctxt-disj Γ (Γ' , A') A (pop x)
+  with ctxt-disj Γ Γ' A x
+ctxt-disj Γ (Γ' , A') A (pop x) | inj₁ z = inj₁ z
+ctxt-disj Γ (Γ' , A') A (pop x) | inj₂ z = inj₂ (pop z)
+
 swap-out : ∀ {T} (Δ Γ : Cx T) (A : Ty T) -> (Δ , A) ++ Γ ⊆ (Δ ++ Γ) , A
 swap-out Δ · A x = x
 swap-out Δ (Γ , B) A x = swap-last (subsetdef x (weakboth (swap-out Δ Γ A)))
 
+swap-in : ∀ {T} (Δ Γ : Cx T) (A : Ty T) -> (Δ ++ Γ) , A ⊆ (Δ , A) ++ Γ
+swap-in Δ Γ A top = is-in Δ Γ A
+swap-in Δ Γ A (pop x)
+  with ctxt-disj Δ Γ _ x
+swap-in Δ Γ A (pop x) | inj₁ y = concat-subset-1 (Δ , A) Γ (pop y)
+swap-in Δ Γ A (pop x) | inj₂ y = concat-subset-2 (Δ , A) Γ y
+
+
+swap-in-out : ∀ {T} (Δ Δ' : Cx T) (A B : Ty T) -> (Δ , A ++ Δ') , B ⊆ (Δ , B ++ Δ') , A
+swap-in-out Δ Δ' A B x
+  with ctxt-disj (Δ , A) (Δ' , B) _ x
+swap-in-out Δ Δ' A B x | inj₁ top = top
+swap-in-out Δ Δ' A B x | inj₁ (pop y) = pop (concat-subset-1 (Δ , B) Δ' (pop y))
+swap-in-out Δ Δ' A B x | inj₂ top = pop (is-in Δ Δ' B)
+swap-in-out Δ Δ' A B x | inj₂ (pop y) = pop (concat-subset-2 (Δ , B) Δ' y)
 
 -- Translations
 

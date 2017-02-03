@@ -24,7 +24,6 @@ data Ty : Types -> Set where
   _=>_ : ∀ {T} -> Ty T -> Ty T -> Ty T
   _∧_ : ∀ {T} -> Ty T -> Ty T -> Ty T
   □_ :  Ty modal -> Ty modal
-  T : Ty simple
 
 data Cx : Types -> Set where
   · : ∀ {T} -> Cx T

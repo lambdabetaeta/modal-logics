@@ -1,7 +1,9 @@
 # modal-logics
 
 Agda formalisation associated to the paper "Dual-context Calculi
-for Modal Logic."
+for Modal Logic." A preprint can be found at
+
+<https://arxiv.org/abs/1602.04860>
 
 Contains basic metatheoretic results about dual-context calculi
 (e.g. admissibility of weakening, contraction, cut) as well as
